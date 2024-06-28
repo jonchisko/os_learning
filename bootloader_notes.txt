@@ -1,0 +1,26 @@
+
+Adding the bootloader as a dependency is not enough to actually create a bootable disk image. The problem is that we need to link our kernel with the bootloader after compilation, but cargo has no support for post-build scripts.
+
+To solve this problem, we created a tool named bootimage that first compiles the kernel and bootloader, and then links them together to create a bootable disk image. To install the tool, go into your home directory (or any directory outside of your cargo project) and execute the following command in your terminal:
+
+cargo install bootimage
+
+For running bootimage and building the bootloader, you need to have the llvm-tools-preview rustup component installed. You can do so by executing rustup component add llvm-tools-preview.
+
+After installing bootimage and adding the llvm-tools-preview component, you can create a bootable disk image by going back into your cargo project directory and executing:
+
+> cargo bootimage
+
+We see that the tool recompiles our kernel using cargo build, so it will automatically pick up any changes you make. Afterwards, it compiles the bootloader, which might take a while. Like all crate dependencies, it is only built once and then cached, so subsequent builds will be much faster. Finally, bootimage combines the bootloader and your kernel into a bootable disk image.
+
+After executing the command, you should see a bootable disk image named bootimage-blog_os.bin in your target/x86_64-blog_os/debug directory. You can boot it in a virtual machine or copy it to a USB drive to boot it on real hardware. (Note that this is not a CD image, which has a different format, so burning it to a CD doesn’t work).
+🔗
+How does it work?
+
+The bootimage tool performs the following steps behind the scenes:
+
+    It compiles our kernel to an ELF file.
+    It compiles the bootloader dependency as a standalone executable.
+    It links the bytes of the kernel ELF file to the bootloader.
+
+When booted, the bootloader reads and parses the appended ELF file. It then maps the program segments to virtual addresses in the page tables, zeroes the .bss section, and sets up a stack. Finally, it reads the entry point address (our _start function) and jumps to it.

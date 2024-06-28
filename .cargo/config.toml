@@ -1,0 +1,16 @@
+# in .cargo/config.toml
+
+# we add this so that cargo knows it needs to recompile core and its cb dep
+# reason: core comes precompiled for targets, but not for our target :)
+[unstable]
+build-std = ["core", "compiler_builtins"]
+# let us enable memcmp, memset, memcpy in the rust core
+# these are usually disabled by themselves, because they provided by the C lib on the system
+# reason to enable: we dont link to any c system lib obviously :)
+build-std-features = ["compiler-builtins-mem"]
+
+[build]
+target = "x86_64-os_learning.json"
+
+[target.'cfg(target_os = "none")']
+runner = "bootimage runner"
